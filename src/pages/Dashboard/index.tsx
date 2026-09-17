@@ -1,11 +1,12 @@
-import React, {useState, useEffect, FormEvent} from 'react';
+import React, {useState, useEffect, useRef, FormEvent} from 'react';
 import {Link} from 'react-router-dom';
 import {FiChevronRight} from 'react-icons/fi';
+import toast, {Toaster} from 'react-hot-toast';
 import api from '../../services/api';
 
 import logoImg from '../../assets/logo.svg';
 
-import {Title, Form, Repositories, Error} from './styles';
+import {Title, Form, Repositories} from './styles';
 
 interface Repository {
   full_name: string;
@@ -19,7 +20,6 @@ interface Repository {
 
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
-  const [inputError, setInputError] = useState('');
 
   const [repositories, setRepositories] = useState<Repository[]>(() => {
     const storagedRepositories = localStorage.getItem(
@@ -32,11 +32,25 @@ const Dashboard: React.FC = () => {
       return [];
     }
   });
+
+  const emptyToastFired = useRef(false);
+
   useEffect(() => {
     localStorage.setItem(
       '@GithubExplorer:repositories',
       JSON.stringify(repositories)
     );
+  }, [repositories]);
+
+  useEffect(() => {
+    if (repositories.length === 0) {
+      if (!emptyToastFired.current) {
+        emptyToastFired.current = true;
+        toast('Nenhum repositório adicionado ainda.', {icon: 'ℹ️'});
+      }
+    } else {
+      emptyToastFired.current = false;
+    }
   }, [repositories]);
 
   async function handleAddRepository(
@@ -45,7 +59,7 @@ const Dashboard: React.FC = () => {
     event.preventDefault();
 
     if (!newRepo) {
-      setInputError('Digite o autor/nome do repositório.');
+      toast.error('Digite o autor/nome do repositório.');
       return;
     }
     try {
@@ -54,18 +68,19 @@ const Dashboard: React.FC = () => {
 
       setRepositories([...repositories, repository]);
       setNewRepo('');
-      setInputError('');
+      toast.success('Repositório adicionado!');
     } catch (err) {
-      setInputError('Erro na busca por esse repositório.');
+      toast.error('Erro na busca por esse repositório.');
     }
   }
 
   return (
     <>
+      <Toaster position="top-right" />
       <img src={logoImg} alt="Github Explorer" />
       <Title>Explore repositórios no Github</Title>
 
-      <Form hasError={!!inputError} onSubmit={handleAddRepository}>
+      <Form onSubmit={handleAddRepository}>
         <input
           value={newRepo}
           onChange={e => setNewRepo(e.target.value)}
@@ -73,8 +88,6 @@ const Dashboard: React.FC = () => {
         />
         <button type="submit">Pesquisar</button>
       </Form>
-
-      {inputError && <Error>{inputError}</Error>}
 
       <Repositories>
         {repositories.map(repo => (
