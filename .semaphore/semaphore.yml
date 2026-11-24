@@ -1,0 +1,17 @@
+version: v1.0
+name: Production build smoke check
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2404
+blocks:
+  - name: Build
+    task:
+      jobs:
+        - name: Build application
+          commands:
+            - checkout
+            - sem-version node 16.20.2
+            - npm install --global yarn@1.22.22
+            - yarn install --frozen-lockfile --non-interactive
+            - CI=true yarn build
