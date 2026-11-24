@@ -1,0 +1,13 @@
+version: v1.0
+name: Semaphore smoke pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2204
+blocks:
+  - name: Smoke check
+    task:
+      jobs:
+        - name: Wait five seconds
+          commands:
+            - sleep 5
